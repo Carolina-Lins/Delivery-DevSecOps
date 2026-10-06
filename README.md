@@ -57,8 +57,8 @@ Projeto de estudo que simula uma esteira de *DevSecOps para o ecossistema de foo
 
 1. *Clone o repositório:*
    bash
-   git clone https://github.com/SEU-USUARIO/aifood-secops-pipeline.git
-   cd aifood-secops-pipeline
+   git clone https://github.com/Carolina-Lins/Delivery-DevSecOps.git
+   cd Delivery-DevSecOps
    
 
 2. *Instale as dependências e configure a API:*
