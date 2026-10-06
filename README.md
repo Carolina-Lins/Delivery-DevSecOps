@@ -92,4 +92,4 @@ json
 
 *Maria Carolina Lins de Oliveira*
 Estudante de Segurança da Informação (CESAR School) · Recife, PE
-[LinkedIn](https://www.linkedin.com/in/SEU-PERFIL) · [GitHub](https://github.com/SEU-USUARIO)
+[LinkedIn](https://www.linkedin.com/in/maria-carolina-lins) · [GitHub](https://github.com/Carolina-Lins)
