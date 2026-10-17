@@ -42,7 +42,7 @@ Projeto de estudo que simula uma esteira de *DevSecOps para o ecossistema de foo
 ## Roadmap
 
 - [x] Definição da arquitetura e dos cenários de risco
-- [ ] Aplicação de exemplo com vulnerabilidades propositais (app_examples/)
+- [x] Aplicação de exemplo com vulnerabilidades propositais (app_examples/)
 - [ ] Integração com Bandit (saída em JSON)
 - [ ] Agente de IA com saída estruturada (sast_scan.py)
 - [ ] Workflow no GitHub Actions com bloqueio de merge
