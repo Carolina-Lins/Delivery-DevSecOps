@@ -49,6 +49,8 @@ Projeto de estudo que simula uma esteira de *DevSecOps para o ecossistema de foo
 - [ ] Geração de relatório SARIF
 - [ ] Demo em vídeo/GIF
 
+teste pipeline
+
 ---
 
 ## Como executar localmente
