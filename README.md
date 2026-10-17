@@ -45,7 +45,7 @@ Projeto de estudo que simula uma esteira de *DevSecOps para o ecossistema de foo
 - [x] Aplicação de exemplo com vulnerabilidades propositais (app_examples/)
 - [x] Integração com Bandit (saída em JSON)
 - [ ] Agente de IA com saída estruturada (sast_scan.py)
-- [ ] Workflow no GitHub Actions com bloqueio de merge
+- [x] Workflow no GitHub Actions com bloqueio de merge
 - [ ] Geração de relatório SARIF
 - [ ] Demo em vídeo/GIF
 
