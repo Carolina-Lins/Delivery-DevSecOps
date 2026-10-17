@@ -1,0 +1,58 @@
+name: DevSecOps Pipeline
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt "bandit[sarif]"
+
+      - name: 1. SAST com Bandit (gera relatórios)
+        run: |
+          mkdir -p reports
+          bandit -r app_examples -f json -o reports/bandit_report.json || true
+          bandit -r app_examples -f sarif -o reports/bandit.sarif || true
+
+      - name: Enviar SARIF para o GitHub (aba Security)
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: reports/bandit.sarif
+
+      - name: 2. Agente de IA (lógica de negócio)
+        if: env.OPENAI_API_KEY != ''
+        run: |
+          python sast_scan.py --target app_examples \
+            --bandit-report reports/bandit_report.json \
+            --output reports/ai_report.json \
+            --fail-on HIGH
+
+      - name: Guardar relatórios
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: reports/
+
+      - name: 3. Bloquear se houver falha HIGH no Bandit
+        run: bandit -r app_examples --severity-level high -q
