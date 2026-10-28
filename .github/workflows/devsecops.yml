@@ -39,12 +39,13 @@ jobs:
         with:
           sarif_file: reports/bandit.sarif
 
-      - name: 2. Agente de IA (lógica de negócio)
+      - name: 2. Agente de IA (OpenAI)
         if: env.OPENAI_API_KEY != ''
         run: |
           python sast_scan.py --target app_examples \
             --bandit-report reports/bandit_report.json \
             --output reports/ai_report.json \
+            --provider openai \
             --fail-on HIGH
 
       - name: Guardar relatórios
