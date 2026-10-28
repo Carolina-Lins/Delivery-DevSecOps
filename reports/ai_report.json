@@ -1,0 +1,42 @@
+[
+  {
+    "file": "app_examples\\vulnerable_app.py",
+    "vulnerability_type": "Account Takeover (ATO)",
+    "severity": "HIGH",
+    "line_number": 56,
+    "description": "Endpoint de login sem limite de tentativas, permitindo brute force.",
+    "suggested_fix": "Adicionar um mecanismo de rate limiting para limitar tentativas de login."
+  },
+  {
+    "file": "app_examples\\vulnerable_app.py",
+    "vulnerability_type": "Fraudes no checkout",
+    "severity": "MEDIUM",
+    "line_number": 83,
+    "description": "Validação insuficiente de quantidade, permitindo números negativos.",
+    "suggested_fix": "Adicionar verificação para garantir que a quantidade seja positiva antes de calcular o total."
+  },
+  {
+    "file": "app_examples\\vulnerable_app.py",
+    "vulnerability_type": "Fraudes no checkout",
+    "severity": "MEDIUM",
+    "line_number": 88,
+    "description": "O total do pedido pode ser manipulado pelo cliente, permitindo fraudes.",
+    "suggested_fix": "Calcular e validar o total no servidor, em vez de confiar nos valores enviados pelo cliente."
+  },
+  {
+    "file": "app_examples\\vulnerable_app.py",
+    "vulnerability_type": "Controle de acesso",
+    "severity": "HIGH",
+    "line_number": 71,
+    "description": "Endpoint de detalhes do pedido sem autenticação, permitindo acesso a pedidos de outros usuários.",
+    "suggested_fix": "Adicionar autenticação e autorização para garantir que apenas usuários apropriados possam acessar seus próprios pedidos."
+  },
+  {
+    "file": "app_examples\\vulnerable_app.py",
+    "vulnerability_type": "Vazamento de dados sensíveis",
+    "severity": "MEDIUM",
+    "line_number": 58,
+    "description": "Informações sensíveis do login sendo logadas, como email e senha.",
+    "suggested_fix": "Remover logs que contenham informações sensíveis ou mascarar os dados sensíveis durante o log."
+  }
+]
