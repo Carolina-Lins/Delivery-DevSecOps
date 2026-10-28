@@ -13,6 +13,7 @@ import json
 import os
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Callable, Literal
@@ -24,6 +25,7 @@ IGNORED_DIRS = {".venv", "venv", "__pycache__", ".git", "node_modules"}
 
 GITHUB_MODELS_URL = "https://models.github.ai/inference/chat/completions"
 GITHUB_API_VERSION = "2026-03-10"  # versão usada nos exemplos da documentação do GitHub
+TRUSTED_REDIRECT_DOMAINS = ("github.ai", "github.com")
 
 # provedor -> (variável de ambiente com a chave, modelo padrão)
 PROVIDERS = {
@@ -86,8 +88,26 @@ def make_openai_completer(key: str, base_url: str | None) -> Completer:
     return complete
 
 
+class KeepPostRedirect(urllib.request.HTTPRedirectHandler):
+    """Segue redirecionamentos mantendo o POST e o corpo.
+
+    O padrão do urllib troca POST por GET em redirecionamentos 301/302/303, o que
+    descarta o prompt. Só segue para domínios do GitHub, para não vazar o token.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        host = urllib.parse.urlparse(newurl).hostname or ""
+        if not any(host == d or host.endswith("." + d) for d in TRUSTED_REDIRECT_DOMAINS):
+            raise RuntimeError(f"Redirecionamento bloqueado para domínio não confiável: {host}")
+        print(f"[aviso] redirecionado ({code}) para {newurl}", file=sys.stderr)
+        return urllib.request.Request(
+            newurl, data=req.data, headers=dict(req.header_items()), method=req.get_method()
+        )
+
+
 def make_github_completer(token: str) -> Completer:
     """Chama o GitHub Models direto pela API REST, como na documentação oficial."""
+    opener = urllib.request.build_opener(KeepPostRedirect)
 
     def complete(model: str, messages: list[dict]) -> str:
         body = json.dumps({"model": model, "messages": messages}).encode("utf-8")
@@ -104,15 +124,18 @@ def make_github_completer(token: str) -> Completer:
             },
         )
         try:
-            with urllib.request.urlopen(request, timeout=120) as response:
+            with opener.open(request, timeout=120) as response:
                 text = response.read().decode("utf-8")
+                status, final_url = response.status, response.geturl()
         except urllib.error.HTTPError as err:
             detail = err.read().decode("utf-8", "replace")[:500]
             raise RuntimeError(f"GitHub Models respondeu HTTP {err.code}: {detail}") from err
         try:
             return json.loads(text)["choices"][0]["message"]["content"]
         except (json.JSONDecodeError, KeyError, IndexError, TypeError) as err:
-            raise RuntimeError(f"Resposta inesperada do GitHub Models: {text[:500]}") from err
+            raise RuntimeError(
+                f"Resposta inesperada do GitHub Models (HTTP {status}, URL final {final_url}): {text[:500]}"
+            ) from err
 
     return complete
 
