@@ -116,6 +116,12 @@ def analyze_file(client, model: str, messages: list[dict]) -> list[Finding]:
             response_format={"type": "json_object"},
             messages=messages,
         )
+        if isinstance(response, str):
+            # A API respondeu com texto que não é JSON (erro de endereço, proxy, etc.)
+            raise RuntimeError(
+                "A API devolveu texto em vez de JSON. Início da resposta: "
+                + response[:500].replace("\n", " ")
+            )
         raw = response.choices[0].message.content
         try:
             return ScanResult.model_validate_json(raw).findings
