@@ -8,12 +8,13 @@ on:
 permissions:
   contents: read
   security-events: write
+  models: read
 
 jobs:
   security-scan:
     runs-on: ubuntu-latest
     env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,12 +40,12 @@ jobs:
         with:
           sarif_file: reports/bandit.sarif
 
-      - name: 2. Agente de IA (lógica de negócio)
-        if: env.OPENAI_API_KEY != ''
+      - name: 2. Agente de IA (GitHub Models, gratuito)
         run: |
           python sast_scan.py --target app_examples \
             --bandit-report reports/bandit_report.json \
             --output reports/ai_report.json \
+            --provider github \
             --fail-on HIGH
 
       - name: Guardar relatórios

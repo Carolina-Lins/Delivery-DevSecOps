@@ -20,6 +20,16 @@ from pydantic import BaseModel, Field, ValidationError
 SEVERITY_ORDER = {"LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
 IGNORED_DIRS = {".venv", "venv", "__pycache__", ".git", "node_modules"}
 
+# Provedores compatíveis com o formato da OpenAI. O GitHub Models tem plano gratuito.
+PROVIDERS = {
+    "openai": {"base_url": None, "key_env": "OPENAI_API_KEY", "model": "gpt-4o-mini"},
+    "github": {
+        "base_url": "https://models.github.ai/inference",
+        "key_env": "GITHUB_TOKEN",
+        "model": "openai/gpt-4o-mini",
+    },
+}
+
 SYSTEM_PROMPT = """Você é um engenheiro de AppSec revisando código de uma API de delivery/foodtech.
 Foque em falhas de LÓGICA DE NEGÓCIO e de controle de acesso que scanners estáticos
 costumam perder, por exemplo:
@@ -118,7 +128,10 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Scanner de segurança com IA")
     parser.add_argument("--target", required=True, help="Pasta ou arquivo .py a analisar")
     parser.add_argument("--bandit-report", help="Relatório do Bandit em JSON (opcional)")
-    parser.add_argument("--model", default=os.getenv("OPENAI_MODEL", "gpt-4o-mini"))
+    parser.add_argument("--provider", choices=list(PROVIDERS), default="openai",
+                        help="openai (pago) ou github (GitHub Models, plano gratuito)")
+    parser.add_argument("--model", help="Nome do modelo (padrão depende do provedor)")
+    parser.add_argument("--base-url", help="Endereço da API, se quiser sobrescrever o do provedor")
     parser.add_argument("--fail-on", choices=list(SEVERITY_ORDER), default="HIGH",
                         help="Severidade mínima que faz o script sair com erro (bloqueia o merge)")
     parser.add_argument("--output", default="ai_report.json", help="Arquivo de saída em JSON")
@@ -128,6 +141,8 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    provider = PROVIDERS[args.provider]
+    model = args.model or provider["model"]
     target = Path(args.target)
     if not target.exists():
         print(f"Erro: caminho não encontrado: {target}")
@@ -138,12 +153,13 @@ def main(argv: list[str] | None = None) -> int:
 
     client = None
     if not args.dry_run:
-        if not os.getenv("OPENAI_API_KEY"):
-            print("Erro: defina a variável OPENAI_API_KEY (ou use --dry-run).")
+        key = os.getenv(provider["key_env"])
+        if not key:
+            print(f"Erro: defina a variável {provider['key_env']} (ou use --dry-run).")
             return 2
         from openai import OpenAI  # import tardio: o dry-run não precisa do pacote
 
-        client = OpenAI()
+        client = OpenAI(api_key=key, base_url=args.base_url or provider["base_url"])
 
     report: list[dict] = []
     for file_path in files:
@@ -156,7 +172,7 @@ def main(argv: list[str] | None = None) -> int:
                   f"{len(items)} achados do Bandit, ~{len(messages[1]['content'])} caracteres enviados")
             continue
 
-        for finding in analyze_file(client, args.model, messages):
+        for finding in analyze_file(client, model, messages):
             report.append({"file": str(file_path), **finding.model_dump()})
 
     if args.dry_run:
